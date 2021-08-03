@@ -5,7 +5,7 @@ edition = "2018"
 description = "Implementations of a tag-based filesystem"
 keywords = ["filesystem", "tag", "no_std"]
 categories = ["filesystem"]
-license = "MIT/Apache 2.0"
+license = "MIT/Apache-2.0"
 repository = "https://github.com/CraftSpider/tbf"
 readme = "README.md"
 
