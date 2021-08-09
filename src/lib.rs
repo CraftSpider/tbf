@@ -51,6 +51,7 @@ use alloc::boxed::Box;
 use alloc::collections::BTreeSet;
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
+use core::convert::TryFrom;
 
 /// A trait representing an implementation of a tag-based filesystem.
 pub trait FileSystem {
@@ -93,6 +94,18 @@ pub trait FileSystem {
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct FileId(u64);
+
+impl TryFrom<u64> for FileId {
+    type Error = ();
+
+    fn try_from(val: u64) -> Result<Self, Self::Error> {
+        if val <= 255 {
+            Err(())
+        } else {
+            Ok(FileId(val))
+        }
+    }
+}
 
 /// The group associated with a tag. Many tags will be part of the 'default'
 /// group, but there can be any number of custom groups.
