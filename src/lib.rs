@@ -147,11 +147,19 @@ impl Tag {
     }
 
     /// Create a tag with a name in the default group
-    pub fn name(name: &str) -> Tag {
+    pub fn named(name: &str) -> Tag {
         Tag {
             group: Group::Default,
             name: name.to_string(),
         }
+    }
+
+    pub fn group(&self) -> &Group {
+        &self.group
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
     }
 }
 

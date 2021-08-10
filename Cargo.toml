@@ -1,6 +1,6 @@
 [package]
 name = "tbf"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 description = "Implementations of a tag-based filesystem"
 keywords = ["filesystem", "tag", "no_std"]

@@ -153,54 +153,54 @@ mod tests {
 
     #[test]
     fn test_tag() {
-        let tag_a = Tag::name("a");
+        let tag_a = Tag::named("a");
 
-        assert!(tag_a.match_tags(&[Tag::name("a"), Tag::name("b"),]));
-        assert!(!tag_a.match_tags(&[Tag::name("b"), Tag::name("c"),]));
+        assert!(tag_a.match_tags(&[Tag::named("a"), Tag::named("b"),]));
+        assert!(!tag_a.match_tags(&[Tag::named("b"), Tag::named("c"),]));
     }
 
     #[test]
     fn test_tag_slice() {
-        let tag_slice = &[Tag::name("a"), Tag::name("b")];
+        let tag_slice = &[Tag::named("a"), Tag::named("b")];
 
         assert!(tag_slice.match_tags(&[
-            Tag::name("b"),
-            Tag::name("c"),
-            Tag::name("d"),
-            Tag::name("a"),
+            Tag::named("b"),
+            Tag::named("c"),
+            Tag::named("d"),
+            Tag::named("a"),
         ]));
 
-        assert!(!tag_slice.match_tags(&[Tag::name("c"), Tag::name("ab"), Tag::name("d"),]))
+        assert!(!tag_slice.match_tags(&[Tag::named("c"), Tag::named("ab"), Tag::named("d"),]))
     }
 
     #[test]
     fn test_pred_and() {
-        let pred = TagPredicate::and([Tag::name("a"), Tag::name("b")]);
+        let pred = TagPredicate::and([Tag::named("a"), Tag::named("b")]);
 
         assert!(pred.match_tags(&[
-            Tag::name("c"),
-            Tag::name("b"),
-            Tag::name("f"),
-            Tag::name("a"),
+            Tag::named("c"),
+            Tag::named("b"),
+            Tag::named("f"),
+            Tag::named("a"),
         ]));
-        assert!(!pred.match_tags(&[Tag::name("c"), Tag::name("f"), Tag::name("a"),]));
+        assert!(!pred.match_tags(&[Tag::named("c"), Tag::named("f"), Tag::named("a"),]));
     }
 
     #[test]
     fn test_pred_or() {
-        let pred = TagPredicate::or([Tag::name("a"), Tag::name("b")]);
+        let pred = TagPredicate::or([Tag::named("a"), Tag::named("b")]);
 
-        assert!(pred.match_tags(&[Tag::name("a"),]));
-        assert!(pred.match_tags(&[Tag::name("b"), Tag::name("c"),]));
-        assert!(!pred.match_tags(&[Tag::name("c"), Tag::name("d"),]));
+        assert!(pred.match_tags(&[Tag::named("a"),]));
+        assert!(pred.match_tags(&[Tag::named("b"), Tag::named("c"),]));
+        assert!(!pred.match_tags(&[Tag::named("c"), Tag::named("d"),]));
     }
 
     #[test]
     fn test_pred_not() {
-        let pred = TagPredicate::not(Tag::name("a"));
+        let pred = TagPredicate::not(Tag::named("a"));
 
-        assert!(pred.match_tags(&[Tag::name("b"), Tag::name("c")]));
-        assert!(!pred.match_tags(&[Tag::name("a"), Tag::name("b")]));
+        assert!(pred.match_tags(&[Tag::named("b"), Tag::named("c")]));
+        assert!(!pred.match_tags(&[Tag::named("a"), Tag::named("b")]));
     }
 
     #[test]
@@ -208,7 +208,7 @@ mod tests {
         let pred = TagPredicate::group(Group::Default);
 
         assert!(pred.match_tags(&[
-            Tag::name("a"),
+            Tag::named("a"),
             Tag::new(Group::custom("group"), "a")
         ]));
         assert!(!pred.match_tags(&[
@@ -226,20 +226,20 @@ mod tests {
             Tag::new(Group::custom("group"), "b"),
         ]));
         assert!(pred.match_tags(&[
-            Tag::name("a"),
-            Tag::name("b"),
+            Tag::named("a"),
+            Tag::named("b"),
         ]));
         assert!(!pred.match_tags(&[
             Tag::new(Group::custom("group"), "b"),
-            Tag::name("b"),
+            Tag::named("b"),
         ]));
     }
 
     #[test]
     fn test_pred_tag() {
-        let pred = TagPredicate::Tag(Tag::name("a"));
+        let pred = TagPredicate::Tag(Tag::named("a"));
 
-        assert!(pred.match_tags(&[Tag::name("c"), Tag::name("a"),]));
-        assert!(!pred.match_tags(&[Tag::name("c"), Tag::name("f"),]));
+        assert!(pred.match_tags(&[Tag::named("c"), Tag::named("a"),]));
+        assert!(!pred.match_tags(&[Tag::named("c"), Tag::named("f"),]));
     }
 }
