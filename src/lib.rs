@@ -93,6 +93,7 @@ pub trait FileSystem {
 /// the values 0-255 are reserved for special usage.
 #[repr(transparent)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FileId(u64);
 
 impl TryFrom<u64> for FileId {
@@ -110,6 +111,7 @@ impl TryFrom<u64> for FileId {
 /// The group associated with a tag. Many tags will be part of the 'default'
 /// group, but there can be any number of custom groups.
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum Group {
     /// The default group
     Default,
@@ -132,6 +134,7 @@ impl Default for Group {
 
 /// A file tag, with a name and optionally a tag group
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
     group: Group,
     name: String,
@@ -154,10 +157,12 @@ impl Tag {
         }
     }
 
+    /// Get the group for this tag
     pub fn group(&self) -> &Group {
         &self.group
     }
 
+    /// Get the name of this tag
     pub fn name(&self) -> &str {
         &self.name
     }
