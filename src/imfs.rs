@@ -193,23 +193,21 @@ mod tests {
     pub fn test_search_files() {
         let ifs = InMemoryFs::new();
 
-        let first = ifs.add_file(&[0, 1, 2], [Tag::named("a"), Tag::named("b")])
+        let first = ifs
+            .add_file(&[0, 1, 2], [Tag::named("a"), Tag::named("b")])
             .unwrap();
-        let second = ifs.add_file(&[0, 1, 2], [Tag::named("a")])
-            .unwrap();
-        let third = ifs.add_file(&[0, 1, 2], [Tag::named("b")])
-            .unwrap();
-        let fourth = ifs.add_file(&[0, 1, 2], [Tag::named("c"), Tag::named("a")])
+        let second = ifs.add_file(&[0, 1, 2], [Tag::named("a")]).unwrap();
+        let third = ifs.add_file(&[0, 1, 2], [Tag::named("b")]).unwrap();
+        let fourth = ifs
+            .add_file(&[0, 1, 2], [Tag::named("c"), Tag::named("a")])
             .unwrap();
 
-        let items = ifs.search_tags(Tag::named("a"))
-            .unwrap();
+        let items = ifs.search_tags(Tag::named("a")).unwrap();
 
         assert!(items.contains(&first) && items.contains(&second) && items.contains(&fourth));
         assert!(!items.contains(&third));
 
-        let items = ifs.search_tags(Tag::named("b"))
-            .unwrap();
+        let items = ifs.search_tags(Tag::named("b")).unwrap();
 
         assert!(items.contains(&first) && items.contains(&third));
         assert!(!items.contains(&second) && !items.contains(&fourth));

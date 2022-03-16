@@ -1,8 +1,8 @@
-use super::{Tag, Group};
+use super::{Group, Tag};
 
-use core::borrow::Borrow;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use core::borrow::Borrow;
 
 mod sealed {
     use super::*;
@@ -41,7 +41,8 @@ impl TagPattern for [Tag] {
         I: IntoIterator<Item = T>,
     {
         let tags = tags.into_iter().collect::<Vec<_>>();
-        self.iter().all(|tag| tags.iter().any(|t| tag == t.borrow()))
+        self.iter()
+            .all(|tag| tags.iter().any(|t| tag == t.borrow()))
     }
 }
 
@@ -128,16 +129,21 @@ impl TagPattern for TagPredicate {
         I: IntoIterator<Item = T>,
     {
         use TagPredicate::*;
+
         let mut iter = tags.into_iter();
         match self {
             And(preds) => {
                 let tags = iter.collect::<Vec<_>>();
-                preds.iter().all(|pred| pred.match_tags(tags.iter().map(|item| item.borrow())))
-            },
+                preds.iter().all(|pred| {
+                    pred.match_tags(tags.iter().map(Borrow::borrow))
+                })
+            }
             Or(preds) => {
                 let tags = iter.collect::<Vec<_>>();
-                preds.iter().any(|pred| pred.match_tags(tags.iter().map(|item| item.borrow())))
-            },
+                preds.iter().any(|pred| {
+                    pred.match_tags(tags.iter().map(Borrow::borrow))
+                })
+            }
             Not(pred) => !pred.match_tags(iter),
 
             Group(group) => iter.any(|tag| &tag.borrow().group == group),
@@ -207,10 +213,7 @@ mod tests {
     fn test_pred_group() {
         let pred = TagPredicate::group(Group::Default);
 
-        assert!(pred.match_tags(&[
-            Tag::named("a"),
-            Tag::new(Group::custom("group"), "a")
-        ]));
+        assert!(pred.match_tags(&[Tag::named("a"), Tag::new(Group::custom("group"), "a")]));
         assert!(!pred.match_tags(&[
             Tag::new(Group::custom("group"), "a"),
             Tag::new(Group::custom("group"), "b")
@@ -225,14 +228,8 @@ mod tests {
             Tag::new(Group::custom("group"), "a"),
             Tag::new(Group::custom("group"), "b"),
         ]));
-        assert!(pred.match_tags(&[
-            Tag::named("a"),
-            Tag::named("b"),
-        ]));
-        assert!(!pred.match_tags(&[
-            Tag::new(Group::custom("group"), "b"),
-            Tag::named("b"),
-        ]));
+        assert!(pred.match_tags(&[Tag::named("a"), Tag::named("b"),]));
+        assert!(!pred.match_tags(&[Tag::new(Group::custom("group"), "b"), Tag::named("b"),]));
     }
 
     #[test]

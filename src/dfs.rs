@@ -7,7 +7,7 @@ use std::sync::{PoisonError, RwLock};
 use std::{fs, io};
 
 use super::{FileId, FileInfo, FileSystem};
-use crate::{Tag, TagPattern, Group};
+use crate::{Group, Tag, TagPattern};
 
 /// Error for a directory-backed filesystem
 #[derive(Debug)]
