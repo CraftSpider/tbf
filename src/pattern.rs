@@ -2,6 +2,7 @@ use super::{Group, Tag};
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
+use alloc::string::{String, ToString};
 use core::borrow::Borrow;
 
 mod sealed {
@@ -153,8 +154,8 @@ impl TagPattern for TagPredicate {
             }
             Not(pred) => !pred.match_tags(iter),
 
-            Group(group) => iter.any(|tag| &tag.borrow().group == group),
-            Name(name) => iter.any(|tag| &tag.borrow().name == name),
+            Group(group) => iter.any(|tag| tag.borrow().group() == group),
+            Name(name) => iter.any(|tag| tag.borrow().name() == name),
             Tag(tag) => tag.match_tags(iter),
         }
     }

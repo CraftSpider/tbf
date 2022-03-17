@@ -12,6 +12,7 @@ use alloc::boxed::Box;
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::vec::Vec;
 
+use crate::error::Kind;
 use super::{FileId, FileInfo, FileSystem, Tag, TagPattern};
 
 type FileData = Vec<Box<[u8]>>;
@@ -21,7 +22,7 @@ type TagData = BTreeMap<FileId, BTreeSet<Tag>>;
 #[derive(Debug)]
 pub enum Error {
     /// The requested file did not exist
-    FileNotFound,
+    FileNotFound(FileId),
     /// The filesystem was poisoned by a thread panic
     Poisoned,
 }
@@ -30,6 +31,19 @@ pub enum Error {
 impl<T> From<PoisonError<T>> for Error {
     fn from(_: PoisonError<T>) -> Error {
         Error::Poisoned
+    }
+}
+
+impl crate::error::Error for Error {
+    fn file_not_found(id: FileId) -> Self {
+        Self::FileNotFound(id)
+    }
+
+    fn generic_kind(&self) -> Kind<'_> {
+        match self {
+            Self::FileNotFound(id) => Kind::FileNotFound(*id),
+            Self::Poisoned => Kind::State,
+        }
     }
 }
 
@@ -89,7 +103,7 @@ impl InMemoryFs {
         self.read_tags()?
             .get(&id)
             .map(|_| ())
-            .ok_or(Error::FileNotFound)
+            .ok_or(Error::FileNotFound(id))
     }
 }
 
@@ -110,7 +124,7 @@ impl FileSystem for InMemoryFs {
             let mut files = self.write_files()?;
             files.push(data.to_owned().into_boxed_slice());
 
-            FileId(files.len() as u64 + 255)
+            FileId::from_u64_unchecked(files.len() as u64 + 255)
         };
 
         let mut tags_map = self.write_tags()?;
@@ -132,7 +146,7 @@ impl FileSystem for InMemoryFs {
 
         if let Some(data) = data {
             let mut files = self.write_files()?;
-            files[(id.0 - 255) as usize] = data.to_owned().into_boxed_slice();
+            files[(id.into_u64_unchecked() - 255) as usize] = data.to_owned().into_boxed_slice();
         }
         if let Some(tags) = tags {
             let mut tags_map = self.write_tags()?;
@@ -146,7 +160,7 @@ impl FileSystem for InMemoryFs {
         self.assert_file_exists(id)?;
 
         let mut files = self.write_files()?;
-        files[(id.0 - 255) as usize] = Box::new([]) as Box<[u8]>;
+        files[(id.into_u64_unchecked() - 255) as usize] = Box::new([]) as Box<[u8]>;
         let mut tags_map = self.write_tags()?;
         tags_map.remove(&id);
         Ok(())
@@ -170,7 +184,7 @@ impl FileSystem for InMemoryFs {
 
         Ok(FileInfo {
             id,
-            data: self.read_files()?[(id.0 - 255) as usize].clone(),
+            data: self.read_files()?[(id.into_u64_unchecked() - 255) as usize].clone(),
             tags: self.read_tags()?.get(&id).unwrap().clone(),
         })
     }
@@ -186,7 +200,7 @@ mod tests {
 
         let id = ifs.add_file(&[0, 1, 2], []).unwrap();
 
-        assert_eq!(id, FileId(256));
+        assert_eq!(id, FileId::from_u64_unchecked(256));
     }
 
     #[test]

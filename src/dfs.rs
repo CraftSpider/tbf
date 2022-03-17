@@ -8,12 +8,13 @@ use std::{fs, io};
 
 use super::{FileId, FileInfo, FileSystem};
 use crate::{Group, Tag, TagPattern};
+use crate::error::Kind;
 
 /// Error for a directory-backed filesystem
 #[derive(Debug)]
 pub enum Error {
     /// A file wasn't found
-    FileNotFound,
+    FileNotFound(FileId),
     /// A thread panic poisoned the state
     Poisoned,
     /// An I/O error occured
@@ -29,6 +30,20 @@ impl<T> From<PoisonError<T>> for Error {
 impl From<io::Error> for Error {
     fn from(err: io::Error) -> Error {
         Error::IoError(err)
+    }
+}
+
+impl crate::error::Error for Error {
+    fn file_not_found(id: FileId) -> Self {
+        Self::FileNotFound(id)
+    }
+
+    fn generic_kind(&self) -> Kind<'_> {
+        match self {
+            Self::FileNotFound(id) => Kind::FileNotFound(*id),
+            Self::IoError(e) => Kind::Source(e),
+            Self::Poisoned => Kind::State,
+        }
     }
 }
 
@@ -105,7 +120,7 @@ impl Iterator for TagIter {
 
         let name = self.read_string()?;
 
-        Some(Tag { group, name })
+        Some(Tag::new(group, &name))
     }
 }
 
@@ -145,7 +160,7 @@ impl DirectoryBackedFs {
     }
 
     fn file_name(&self, id: FileId) -> PathBuf {
-        self.dir.join(format!("{:016X}", id.0))
+        self.dir.join(format!("{:016X}", id.into_u64_unchecked()))
     }
 
     fn write_tags<I>(&self, id: FileId, tags: I) -> Result<(), Error>
@@ -160,13 +175,13 @@ impl DirectoryBackedFs {
 
         tags.into_iter()
             .try_for_each::<_, Result<(), Error>>(|tag| {
-                if let Group::Custom(_) = tag.group {
+                if let Group::Custom(_) = tag.group() {
                     file.write_all(&[1])?;
                 } else {
                     file.write_all(&[0])?;
                 }
 
-                match tag.group {
+                match tag.group() {
                     Group::Custom(group) => {
                         file.write_all(&[1])?;
                         file.write_all(&(group.len() as u32).to_le_bytes())?;
@@ -175,8 +190,8 @@ impl DirectoryBackedFs {
                     Group::Default => file.write_all(&[0])?,
                 }
 
-                file.write_all(&(tag.name.len() as u32).to_le_bytes())?;
-                file.write_all(tag.name.as_bytes())?;
+                file.write_all(&(tag.name().len() as u32).to_le_bytes())?;
+                file.write_all(tag.name().as_bytes())?;
 
                 Ok(())
             })?;
@@ -199,7 +214,7 @@ impl FileSystem for DirectoryBackedFs {
         I: IntoIterator<Item = Tag>,
     {
         self.assert_dir()?;
-        let cur_id = FileId(self.state.read()?.cur_id);
+        let cur_id = FileId::from_u64_unchecked(self.state.read()?.cur_id);
         fs::write(self.file_name(cur_id).with_extension(".dat"), data)?;
         self.write_tags(cur_id, tags)?;
         self.state.write()?.cur_id += 1;
@@ -245,7 +260,7 @@ impl FileSystem for DirectoryBackedFs {
                 Some(name) => name.to_owned(),
                 None => continue,
             };
-            let (id, ext) = match file_name.split_once(".") {
+            let (id, ext) = match file_name.split_once('.') {
                 Some(val) => val,
                 None => continue,
             };
@@ -254,7 +269,7 @@ impl FileSystem for DirectoryBackedFs {
                 continue;
             }
             let id = match id.parse() {
-                Ok(val) => FileId(val),
+                Ok(val) => FileId::from_u64_unchecked(val),
                 Err(_) => continue,
             };
 
