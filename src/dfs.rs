@@ -8,7 +8,7 @@ use std::{fs, io};
 
 use super::{FileId, FileInfo, FileSystem};
 use crate::{Group, Tag, TagPattern};
-use crate::error::Kind;
+use crate::error::ErrorKind;
 
 /// Error for a directory-backed filesystem
 #[derive(Debug)]
@@ -38,11 +38,11 @@ impl crate::error::Error for Error {
         Self::FileNotFound(id)
     }
 
-    fn generic_kind(&self) -> Kind<'_> {
+    fn generic_kind(&self) -> ErrorKind<'_> {
         match self {
-            Self::FileNotFound(id) => Kind::FileNotFound(*id),
-            Self::IoError(e) => Kind::Source(e),
-            Self::Poisoned => Kind::State,
+            Self::FileNotFound(id) => ErrorKind::FileNotFound(*id),
+            Self::IoError(e) => ErrorKind::Source(e),
+            Self::Poisoned => ErrorKind::State,
         }
     }
 }

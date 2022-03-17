@@ -12,7 +12,7 @@ use alloc::boxed::Box;
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::vec::Vec;
 
-use crate::error::Kind;
+use crate::error::ErrorKind;
 use super::{FileId, FileInfo, FileSystem, Tag, TagPattern};
 
 type FileData = Vec<Box<[u8]>>;
@@ -39,10 +39,10 @@ impl crate::error::Error for Error {
         Self::FileNotFound(id)
     }
 
-    fn generic_kind(&self) -> Kind<'_> {
+    fn generic_kind(&self) -> ErrorKind<'_> {
         match self {
-            Self::FileNotFound(id) => Kind::FileNotFound(*id),
-            Self::Poisoned => Kind::State,
+            Self::FileNotFound(id) => ErrorKind::FileNotFound(*id),
+            Self::Poisoned => ErrorKind::State,
         }
     }
 }

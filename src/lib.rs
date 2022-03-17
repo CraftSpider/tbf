@@ -40,7 +40,7 @@ mod dfs;
 mod imfs;
 mod pattern;
 mod file;
-mod error;
+pub mod error;
 
 #[cfg(feature = "dfs")]
 pub use dfs::{DirectoryBackedFs, Error as DfsError};
@@ -49,7 +49,7 @@ pub use imfs::{Error as ImfsError, InMemoryFs};
 
 pub use pattern::{TagPattern, TagPredicate};
 pub use file::{FileId, Tag, Group};
-pub use error::Error;
+pub use error::{Error, ErrorKind};
 
 use alloc::boxed::Box;
 use alloc::collections::BTreeSet;

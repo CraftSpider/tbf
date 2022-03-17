@@ -6,7 +6,7 @@ use crate::FileId;
 /// implementations. Some implementations may never produce errors with a specific kind, so if
 /// you know the implementation, it's better to work with its error directly.
 #[non_exhaustive]
-pub enum Kind<'a> {
+pub enum ErrorKind<'a> {
     /// Error was for a file ID that doesn't exist
     FileNotFound(FileId),
     /// Error was caused by another error being returned in the implementation. Only present
@@ -27,5 +27,5 @@ pub trait Error: Sized {
     fn file_not_found(id: FileId) -> Self;
 
     /// Get the generic kind of this error
-    fn generic_kind(&self) -> Kind<'_>;
+    fn generic_kind(&self) -> ErrorKind<'_>;
 }
