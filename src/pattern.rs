@@ -57,6 +57,7 @@ impl<const N: usize> TagPattern for [Tag; N] {
 }
 
 /// Complex support for matching binary expressions against tags
+#[derive(Debug, PartialEq)]
 pub enum TagPredicate {
     /// And predicates together
     And(Vec<TagPredicate>),
@@ -76,6 +77,12 @@ pub enum TagPredicate {
 impl From<Tag> for TagPredicate {
     fn from(tag: Tag) -> TagPredicate {
         TagPredicate::Tag(tag)
+    }
+}
+
+impl From<Group> for TagPredicate {
+    fn from(group: Group) -> Self {
+        TagPredicate::Group(group)
     }
 }
 

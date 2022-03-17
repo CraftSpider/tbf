@@ -96,6 +96,28 @@ pub trait FileSystem {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct FileId(u64);
 
+impl FileId {
+    /// Check if this ID represents a special file
+    pub fn is_special(self) -> bool {
+        self.0 <= 255
+    }
+
+    /// Check if this ID represents a standard file
+    pub fn is_file(self) -> bool {
+        self.0 > 255
+    }
+
+    /// Create a `FileId` from a `u64`, without checking that the value is in the reserved range
+    pub fn from_u64_unchecked(id: u64) -> Self {
+        FileId(id)
+    }
+
+    /// Create a `u64` from a `FileId`, without checking that the value is in the reserved range
+    pub fn into_u64_unchecked(self) -> u64 {
+        self.0
+    }
+}
+
 impl TryFrom<u64> for FileId {
     type Error = ();
 
@@ -104,6 +126,18 @@ impl TryFrom<u64> for FileId {
             Err(())
         } else {
             Ok(FileId(val))
+        }
+    }
+}
+
+impl TryFrom<FileId> for u64 {
+    type Error = ();
+
+    fn try_from(id: FileId) -> Result<Self, Self::Error> {
+        if id.is_special() {
+            Err(())
+        } else {
+            Ok(id.0)
         }
     }
 }
