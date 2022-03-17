@@ -1,3 +1,5 @@
+//! Common error trait and kind for all implementations of the main trait
+
 use core::marker::PhantomData;
 
 use crate::FileId;
