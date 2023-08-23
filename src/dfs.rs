@@ -243,9 +243,13 @@ impl FileSystem for DirectoryBackedFs {
 
     fn remove_file(&self, id: FileId) -> Result<(), Self::Error> {
         self.assert_dir()?;
-        let _ = fs::remove_file(self.file_name(id).with_extension(".dat"));
-        let _ = fs::remove_file(self.file_name(id).with_extension(".tag"));
-        Ok(())
+        let dat = fs::remove_file(self.file_name(id).with_extension(".dat"));
+        let tag = fs::remove_file(self.file_name(id).with_extension(".tag"));
+
+        match (dat, tag) {
+            (Err(e), _) | (_, Err(e)) => Err(Error::IoError(e)),
+            (_, _) => Ok(())
+        }
     }
 
     fn search_tags<P>(&self, tags: P) -> Result<Vec<FileId>, Self::Error>
@@ -274,7 +278,7 @@ impl FileSystem for DirectoryBackedFs {
             };
 
             if tags.match_tags(self.read_tags(id)?) {
-                out.push(id)
+                out.push(id);
             }
         }
         Ok(out)
@@ -284,6 +288,6 @@ impl FileSystem for DirectoryBackedFs {
         self.assert_dir()?;
         let data = fs::read(self.file_name(id).with_extension(".dat"))?.into_boxed_slice();
         let tags = self.read_tags(id)?.collect();
-        Ok(FileInfo { id, data, tags })
+        Ok(FileInfo { id, tags, data })
     }
 }

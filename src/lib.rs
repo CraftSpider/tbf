@@ -13,6 +13,7 @@
 //! implementations. This could be an existing standard filesystem, a SQL database, or just
 //! in-memory maps.
 
+#![warn(clippy::pedantic)]
 #![warn(
     missing_docs,
     elided_lifetimes_in_paths,

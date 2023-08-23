@@ -24,10 +24,20 @@ pub enum ErrorKind<'a> {
 }
 
 /// A common trait for all tag-based filesystem errors
-pub trait Error: Sized {
+pub trait Error {
     /// Create an instance of this error for a file that wasn't found
-    fn file_not_found(id: FileId) -> Self;
+    fn file_not_found(id: FileId) -> Self
+    where
+        Self: Sized;
 
     /// Get the generic kind of this error
     fn generic_kind(&self) -> ErrorKind<'_>;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[allow(dead_code)]
+    fn test_dyn(_: &dyn Error) {}
 }

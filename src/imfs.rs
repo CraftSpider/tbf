@@ -173,7 +173,7 @@ impl FileSystem for InMemoryFs {
         let mut out = Vec::new();
         for (id, file_tags) in self.read_tags()?.iter() {
             if tags.match_tags(file_tags) {
-                out.push(*id)
+                out.push(*id);
             }
         }
         Ok(out)
