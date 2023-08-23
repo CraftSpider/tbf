@@ -171,7 +171,7 @@ impl DirectoryBackedFs {
             .write(true)
             .create(true)
             .truncate(true)
-            .open(self.file_name(id).with_extension(".tag"))?;
+            .open(self.file_name(id).with_extension("tag"))?;
 
         tags.into_iter()
             .try_for_each::<_, Result<(), Error>>(|tag| {
@@ -201,7 +201,7 @@ impl DirectoryBackedFs {
 
     fn read_tags(&self, id: FileId) -> Result<impl Iterator<Item = Tag>, Error> {
         let back =
-            io::BufReader::new(File::open(self.file_name(id).with_extension(".tag"))?).bytes();
+            io::BufReader::new(File::open(self.file_name(id).with_extension("tag"))?).bytes();
         Ok(TagIter::new(back))
     }
 }
@@ -215,7 +215,7 @@ impl FileSystem for DirectoryBackedFs {
     {
         self.assert_dir()?;
         let cur_id = FileId::from_u64_unchecked(self.state.read()?.cur_id);
-        fs::write(self.file_name(cur_id).with_extension(".dat"), data)?;
+        fs::write(self.file_name(cur_id).with_extension("dat"), data)?;
         self.write_tags(cur_id, tags)?;
         self.state.write()?.cur_id += 1;
         self.state.read()?.save(&self.dir.join("tbf.dat"))?;
@@ -233,7 +233,7 @@ impl FileSystem for DirectoryBackedFs {
     {
         self.assert_dir()?;
         if let Some(data) = data {
-            fs::write(self.file_name(id).with_extension(".dat"), data)?;
+            fs::write(self.file_name(id).with_extension("dat"), data)?;
         }
         if let Some(tags) = tags {
             self.write_tags(id, tags)?;
@@ -243,8 +243,8 @@ impl FileSystem for DirectoryBackedFs {
 
     fn remove_file(&self, id: FileId) -> Result<(), Self::Error> {
         self.assert_dir()?;
-        let dat = fs::remove_file(self.file_name(id).with_extension(".dat"));
-        let tag = fs::remove_file(self.file_name(id).with_extension(".tag"));
+        let dat = fs::remove_file(self.file_name(id).with_extension("dat"));
+        let tag = fs::remove_file(self.file_name(id).with_extension("tag"));
 
         match (dat, tag) {
             (Err(e), _) | (_, Err(e)) => Err(Error::IoError(e)),
@@ -286,7 +286,7 @@ impl FileSystem for DirectoryBackedFs {
 
     fn get_info(&self, id: FileId) -> Result<FileInfo, Self::Error> {
         self.assert_dir()?;
-        let data = fs::read(self.file_name(id).with_extension(".dat"))?.into_boxed_slice();
+        let data = fs::read(self.file_name(id).with_extension("dat"))?.into_boxed_slice();
         let tags = self.read_tags(id)?.collect();
         Ok(FileInfo { id, tags, data })
     }
