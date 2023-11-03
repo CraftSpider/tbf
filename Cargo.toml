@@ -20,3 +20,6 @@ dfs = ["std"]
 [dependencies]
 spin = { version = "0.9.8", optional = true }
 serde = { version = "1.0", optional = true, features = ["derive"] }
+
+[dev-dependencies]
+tempdir = "0.3"

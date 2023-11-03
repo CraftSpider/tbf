@@ -1,5 +1,5 @@
+use alloc::borrow::Cow;
 use core::convert::TryFrom;
-use alloc::string::{String, ToString};
 
 /// Represents the ID of a file. Most numbers simply represent a unique file, however,
 /// the values 0-255 are reserved for special usage.
@@ -62,13 +62,40 @@ pub enum Group {
     /// The default group
     Default,
     /// A group with a custom name
-    Custom(String),
+    Custom(Cow<'static, str>),
 }
 
 impl Group {
     /// Get the custom group associated with a given string
-    pub fn custom(group: &str) -> Group {
-        Group::Custom(group.to_string())
+    pub fn custom(group: impl Into<Cow<'static, str>>) -> Group {
+        Group::Custom(group.into())
+    }
+}
+
+impl<I: Into<Cow<'static, str>>> From<I> for Group {
+    fn from(value: I) -> Self {
+        let inner = value.into();
+        if inner.is_empty() {
+            Group::Default
+        } else {
+            Group::Custom(inner)
+        }
+    }
+}
+
+impl PartialEq<str> for Group {
+    fn eq(&self, other: &str) -> bool {
+        if other == "" {
+            *self == Group::Default
+        } else {
+            matches!(self, Group::Custom(name) if name == other)
+        }
+    }
+}
+
+impl PartialEq<&str> for Group {
+    fn eq(&self, other: &&str) -> bool {
+        <Group as PartialEq<str>>::eq(self, *other)
     }
 }
 
@@ -83,23 +110,23 @@ impl Default for Group {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Tag {
     group: Group,
-    name: String,
+    name: Cow<'static, str>,
 }
 
 impl Tag {
     /// Create a new tag with both a group and tag name
-    pub fn new(group: Group, name: &str) -> Tag {
+    pub fn new<G: Into<Group>, N: Into<Cow<'static, str>>>(group: G, name: N) -> Tag {
         Tag {
-            group,
-            name: name.to_string(),
+            group: group.into(),
+            name: name.into(),
         }
     }
 
     /// Create a tag with a name in the default group
-    pub fn named(name: &str) -> Tag {
+    pub fn named<N: Into<Cow<'static, str>>>(name: N) -> Tag {
         Tag {
             group: Group::Default,
-            name: name.to_string(),
+            name: name.into(),
         }
     }
 

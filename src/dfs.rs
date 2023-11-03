@@ -1,5 +1,6 @@
 //! Existing file-system backed implementation of a TBF
 
+use alloc::borrow::Cow;
 use std::fs::{File, OpenOptions};
 use std::io::{BufReader, Read, Write};
 use std::path::{Path, PathBuf};
@@ -113,14 +114,14 @@ impl Iterator for TagIter {
         let has_group = self.back.next()?.unwrap();
 
         let group = if has_group == 1 {
-            Group::Custom(self.read_string()?)
+            Group::Custom(Cow::Owned(self.read_string()?))
         } else {
             Group::Default
         };
 
         let name = self.read_string()?;
 
-        Some(Tag::new(group, &name))
+        Some(Tag::new(group, name))
     }
 }
 
@@ -133,9 +134,10 @@ pub struct DirectoryBackedFs {
 
 impl DirectoryBackedFs {
     /// Create or load a directory-backed filesystem, in the provided directory.
-    pub fn new(dir: PathBuf) -> Result<DirectoryBackedFs, Error> {
+    pub fn new<P:         AsRef<Path>>(dir: P) -> Result<DirectoryBackedFs, Error> {
+        let dir = dir.as_ref();
         if !dir.exists() {
-            fs::create_dir_all(dir.clone())?;
+            fs::create_dir_all(dir)?;
         } else if !dir.is_dir() {
             return Err(Error::IoError(io::Error::new(
                 io::ErrorKind::Other,
@@ -145,7 +147,7 @@ impl DirectoryBackedFs {
 
         let state = RwLock::new(SavedState::from_path(&dir.join("tbf.dat"))?);
 
-        Ok(DirectoryBackedFs { dir, state })
+        Ok(DirectoryBackedFs { dir: dir.to_owned(), state })
     }
 
     fn assert_dir(&self) -> Result<(), Error> {
@@ -154,7 +156,7 @@ impl DirectoryBackedFs {
         } else {
             Err(Error::IoError(io::Error::new(
                 io::ErrorKind::Other,
-                "Provided path exists and is not a directory",
+                "Provided path is not a directory",
             )))
         }
     }
@@ -175,12 +177,6 @@ impl DirectoryBackedFs {
 
         tags.into_iter()
             .try_for_each::<_, Result<(), Error>>(|tag| {
-                if let Group::Custom(_) = tag.group() {
-                    file.write_all(&[1])?;
-                } else {
-                    file.write_all(&[0])?;
-                }
-
                 match tag.group() {
                     Group::Custom(group) => {
                         file.write_all(&[1])?;
@@ -200,8 +196,9 @@ impl DirectoryBackedFs {
     }
 
     fn read_tags(&self, id: FileId) -> Result<impl Iterator<Item = Tag>, Error> {
+        let name = self.file_name(id).with_extension("tag");
         let back =
-            io::BufReader::new(File::open(self.file_name(id).with_extension("tag"))?).bytes();
+            BufReader::new(File::open(name)?).bytes();
         Ok(TagIter::new(back))
     }
 }
@@ -272,7 +269,7 @@ impl FileSystem for DirectoryBackedFs {
             if ext != "tag" {
                 continue;
             }
-            let id = match id.parse() {
+            let id = match u64::from_str_radix(id, 16) {
                 Ok(val) => FileId::from_u64_unchecked(val),
                 Err(_) => continue,
             };
